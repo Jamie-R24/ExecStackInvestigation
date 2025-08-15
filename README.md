@@ -1,6 +1,8 @@
 # ExecStackInvestigation
 Investigation of the NX Stack compiler defense and how to circumvent it
 
+Exploit Scipts can be decrypted with 7zip and the password is the flag for the ctf. Good luck!
+
 ## Run Setup:
 The files can be downloaded from the picoCTF website listed [here](https://play.picoctf.org/practice/challenge/179?page=1&search=Here%27s%20a%20). Once the files are downloaded, you are left with the executable `vuln`, `libc.so.6` and `Makefile`. 
 
