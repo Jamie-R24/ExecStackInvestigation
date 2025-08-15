@@ -106,7 +106,8 @@ p.recvuntil(b"WeLcOmE To mY EcHo sErVeR!")
 
 Running this (named `remote_exploit.py` in the Github), pops a shell on the server where we can use `cat flag.txt` to get the flag. 
 
-<img width="2978" height="944" alt="image" src="https://github.com/user-attachments/assets/95a6edbc-8890-46aa-844d-1db03be1ee1e" />
+<img width="2978" height="838" alt="Getridofflag" src="https://github.com/user-attachments/assets/cbbd9dbb-bef3-4815-9e9a-a3305d1f9821" />
+
 
 
 
