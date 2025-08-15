@@ -40,7 +40,9 @@ Let's throw the exectuable into `gdb` and find where we override the `rip` regis
 <img width="3840" height="2400" alt="image" src="https://github.com/user-attachments/assets/0606ec04-3703-464a-bf4a-bb078972e1e5" />
 
 
-Although we now know the offset, we can't just override the return address because of the security feature, `NX Enabled`. This disables any code from being executed from the stack, so a simple return address overwrite won't work. If we point our overwritten return address to a function from the standard libc library, we can leverage the power of those functions. The standard libc libary is located in an always-executable location, so we would have no problem pointing to one of those functions. We need to find where the libc libary was loaded during runtime. 
+Although we now know the offset, we can't just override the return address because of the security feature, `NX Enabled`. This disables any code from being executed from the stack, so a simple return address overwrite won't work. Also, there are no methods within the binary that easily allow us to obtain the `flag.txt` file. We need a way to access the file without necessarily printing it. 
+
+If we point our overwritten return address to a function from the standard libc library, we can leverage the power of those functions. The standard libc libary is located in an always-executable location, so we would have no problem pointing to one of those functions. We need to find where the libc libary was loaded during runtime. Then, we can use `system()` in combination with `/bin/sh` to pop a shell and obtain the flag.
 
 We can use the `puts()` function at the end of the `do_stuff()` function to leak the address of the libc function to `stdout`. I'm choosing `setbuff()` as the libc function. Let's use ROPGadget to help us. We can run `ROPgadget --binary vuln | grep "pop rdi"`. This gives us the ability to modify rdi.
 
