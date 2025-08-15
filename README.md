@@ -54,7 +54,7 @@ We can use ghidra to find the address of `puts()` and `setbuf()`.
 <img width="2264" height="236" alt="image" src="https://github.com/user-attachments/assets/44676f7c-3c11-47bd-99c1-55b3d1e9345f" />
 
 
-The address for `setbuf()` is from the GOT (global offset table). Referrencing the GOT entry for `setbuf()` should return us the actual memory locaiton of the function. 
+The address for `setbuf()` is from the GOT (global offset table). Referrencing the GOT entry for `setbuf()` should return us the actual memory location of the function. 
 
 We have the necessary addresses now so we can leak the actual address of `setbuf()` within the program. We can throw together this initial python script to obtain the information. 
 
@@ -87,7 +87,7 @@ Now we can find the address of the `system()` function within libc. By using `sy
 <img width="1360" height="490" alt="image" src="https://github.com/user-attachments/assets/3a4af4d8-6a48-4c05-ad4c-6f5ceeacac8a" />
 
 
-Now we can finally craft our final payload. But first, let's find the address for an ROPgadget ret so that we can make sure the stack is aligned so no segmentation fault occurs. Then we can incorporate this into the final payload. That is as simple as running `ROPgadget --binary vuln | grep "ret"`. I picked the address that just showed ret and nothing else which happened to be `0x40052e`.
+Now we can craft our final payload. But first, let's find the address for an ROPgadget ret so that we can make sure the stack is aligned so no segmentation fault occurs. Then we can incorporate this into the final payload. That is as simple as running `ROPgadget --binary vuln | grep "ret"`. I picked the address that just showed ret and nothing else which happened to be `0x40052e`.
 
 <img width="1386" height="1134" alt="image" src="https://github.com/user-attachments/assets/cd648a85-effb-4f71-8f55-e7956a3eff65" />
 
