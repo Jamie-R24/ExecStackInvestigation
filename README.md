@@ -40,4 +40,73 @@ Let's throw the exectuable into `gdb` and find where we override the `rip` regis
 <img width="3840" height="2400" alt="image" src="https://github.com/user-attachments/assets/0606ec04-3703-464a-bf4a-bb078972e1e5" />
 
 
-Although we now know the offset, we can't just override the return address because of the security feature, `NX Enabled`. This disables any code from being executed from the stack, so a simple return address overwrite won't work. If we point our overwritten return address to a function from the standard libc library, we can leverage the power of those functions. The standard libc libary is located in an always-executable location, so we would have no problem pointing to one of those functions. 
+Although we now know the offset, we can't just override the return address because of the security feature, `NX Enabled`. This disables any code from being executed from the stack, so a simple return address overwrite won't work. If we point our overwritten return address to a function from the standard libc library, we can leverage the power of those functions. The standard libc libary is located in an always-executable location, so we would have no problem pointing to one of those functions. We need to find where the libc libary was loaded during runtime. 
+
+We can use the `puts()` function at the end of the `do_stuff()` function to leak the address of the libc function to `stdout`. I'm choosing `setbuff()` as the libc function. Let's use ROPGadget to help us. We can run `ROPgadget --binary vuln | grep "pop rdi"`. This gives us the ability to modify rdi.
+
+<img width="1172" height="238" alt="image" src="https://github.com/user-attachments/assets/8ddcc21e-7975-4906-b1a3-58ccca3ba8d4" />
+
+
+We can use ghidra to find the address of `puts()` and `setbuf()`.
+
+<img width="2516" height="900" alt="image" src="https://github.com/user-attachments/assets/0a8f4bdc-7f20-4ec6-81ac-833b98a00c84" />
+
+<img width="2264" height="236" alt="image" src="https://github.com/user-attachments/assets/44676f7c-3c11-47bd-99c1-55b3d1e9345f" />
+
+
+The address for `setbuf()` is from the GOT (global offset table). Referrencing the GOT entry for `setbuf()` should return us the actual memory locaiton of the function. 
+
+We have the necessary addresses now so we can leak the actual address of `setbuf()` within the program. We can throw together this initial python script to obtain the information. 
+
+<img width="3840" height="2400" alt="image" src="https://github.com/user-attachments/assets/bd6bee38-74eb-412a-9fc2-5871a93bc479" />
+
+
+Running this script with `python3 <name-of-script>` results in the following output:
+
+<img width="1192" height="324" alt="image" src="https://github.com/user-attachments/assets/20ad4d52-490a-4bcd-b1b9-9bce2eb0266f" />
+
+
+With this info we can calculate where libc is located in memory. Using the `libc.so.6` file provided, we can calculate the offset of the start of libc to `setbuf()`. 
+
+<img width="1926" height="230" alt="image" src="https://github.com/user-attachments/assets/3306ca0a-acfa-434d-a3f4-df687648856d" />
+
+
+The offset is `0x88540`. We can get the base address of libc by doing simple hex calculation. `libc_start = leaked_setbuf_address - offset`. Let's add this to the python script.
+
+<img width="1430" height="478" alt="image" src="https://github.com/user-attachments/assets/cd233d5e-8c29-4ae9-a993-3c82fd893628" />
+
+
+Now we can find the address of the `system()` function within libc. By using `system()`, we can pass in `/bin/sh` and launch a shell to capture our flag. We can also find the address of `/bin/sh` within the libc address space. 
+
+<img width="1940" height="176" alt="image" src="https://github.com/user-attachments/assets/2adadbd7-bd2d-4981-8260-9301bda6a514" />
+
+<img width="1340" height="368" alt="image" src="https://github.com/user-attachments/assets/b5635fe6-a86e-4346-ab25-190c422a1238" />
+
+<img width="986" height="168" alt="image" src="https://github.com/user-attachments/assets/652ab9fc-d1af-4268-b7bf-fdc6420a9eed" />
+
+<img width="1360" height="490" alt="image" src="https://github.com/user-attachments/assets/3a4af4d8-6a48-4c05-ad4c-6f5ceeacac8a" />
+
+
+Now we can finally craft our final payload. But first, let's find the address for an ROPgadget ret so that we can make sure the stack is aligned so no segmentation fault occurs. Then we can incorporate this into the final payload. That is as simple as running `ROPgadget --binary vuln | grep "ret"`. I picked the address that just showed ret and nothing else which happened to be `0x40052e`.
+
+<img width="1386" height="1134" alt="image" src="https://github.com/user-attachments/assets/cd648a85-effb-4f71-8f55-e7956a3eff65" />
+
+
+Running this locally pops us a shell and completes our exploit.
+
+<img width="3788" height="870" alt="image" src="https://github.com/user-attachments/assets/4b457936-278b-4392-aec5-a1257b74fa74" />
+
+We can modify the script to run remotely on the picoCTF server by adding these lines at the top instead of `p.process("./vuln")`.
+```
+p = remote('mercury.picoctf.net', 49464)  
+p.recvuntil(b"WeLcOmE To mY EcHo sErVeR!")
+```
+
+Running this (named `remote_exploit.py` in the Github), pops a shell on the server where we can use `cat flag.txt` to get the flag. 
+
+<img width="2978" height="944" alt="image" src="https://github.com/user-attachments/assets/95a6edbc-8890-46aa-844d-1db03be1ee1e" />
+
+
+
+
+
